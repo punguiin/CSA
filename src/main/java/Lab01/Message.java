@@ -1,9 +1,9 @@
 package Lab01;
 
 public class Message {
-    private int cType;
-    private int bUserId;
-    private byte[] message;
+    final private int cType;
+    final private int bUserId;
+    final private byte[] message;
 
     public Message(int cType, int bUserId, byte[] message){
         this.cType = cType;

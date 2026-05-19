@@ -2,6 +2,7 @@ package Lab01;
 
 import java.nio.ByteBuffer;
 import java.security.GeneralSecurityException;
+import java.util.Arrays;
 
 public class PacketEncoder {
     public byte[] encodePacket(Packet pkt, MessageCipher cipher) throws GeneralSecurityException {
@@ -14,9 +15,14 @@ public class PacketEncoder {
         buffer.put(pkt.getBSrc());
         buffer.putLong(pkt.getBPktId());
         buffer.putInt(wLen);
-        buffer.putShort(pkt.getWCrc16Head());
+
+        short headCrc = Crc16.calculateCrc(Arrays.copyOfRange(buffer.array(), 0, 14));
+        buffer.putShort(headCrc);
+
         buffer.put(ciphertext);
-        buffer.putShort(pkt.getWCrc16Tail());
+
+        short tailCrc = Crc16.calculateCrc(ciphertext);
+        buffer.putShort(tailCrc);
 
         return buffer.array();
     }
