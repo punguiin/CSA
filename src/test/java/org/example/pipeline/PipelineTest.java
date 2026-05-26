@@ -1,5 +1,7 @@
 package org.example.pipeline;
 
+import org.example.protocol.CommandCodec;
+import org.example.protocol.CommandType;
 import org.example.protocol.Message;
 import org.example.protocol.MessageCipher;
 import org.example.protocol.Packet;
@@ -53,7 +55,8 @@ class PipelineTest {
                 PacketEncoder encoder = new PacketEncoder();
                 try {
                     for (int i = 0; i < perThread; i++) {
-                        Message msg = new Message(3, 1, new byte[]{1, 2, 3});
+                        Message msg = new Message(CommandType.INCREMENT.code(), 1,
+                                CommandCodec.changeQuantity(7, 20));
                         Packet pkt = new Packet((byte) 0x13, (byte) 1, pktIdSeq.getAndIncrement(), 0, msg);
                         rawIn.put(encoder.encodePacket(pkt, cipher));
                     }
@@ -106,7 +109,7 @@ class PipelineTest {
             Decryptor decryptor = new Decryptor(rawIn, decoded, cipher);
             Processor processor = new Processor(decoded, processed);
             Encryptor encryptor = new Encryptor(processed, rawOut, cipher);
-            Sender sender = new FakeSender(rawOut);
+            Sender sender = new FakeSender(rawOut, cipher);
 
             sender.start();
             encryptor.start();

@@ -29,7 +29,7 @@ public class App {
         Decryptor decryptor = new Decryptor(rawIn, decoded, cipher);
         Processor processor = new Processor(decoded, processed);
         Encryptor encryptor = new Encryptor(processed, rawOut, cipher);
-        Sender sender = new FakeSender(rawOut);
+        Sender sender = new FakeSender(rawOut, cipher);
 
         sender.start();
         encryptor.start();

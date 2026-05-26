@@ -1,5 +1,8 @@
 package org.example.pipeline;
 
+import org.example.protocol.CommandCodec;
+import org.example.protocol.CommandType;
+import org.example.protocol.Message;
 import org.example.protocol.MessageCipher;
 import org.example.protocol.Packet;
 import org.example.protocol.PacketDecoder;
@@ -41,6 +44,10 @@ public class Decryptor {
                 }
                 try {
                     Packet pkt = decoder.decodePacket(raw, cipher);
+                    Message msg = pkt.getBMsq();
+                    CommandType type = CommandType.fromCode(msg.getCType());
+                    System.out.printf("Decryptor: pktId=%d userId=%d %s%n",
+                            pkt.getBPktId(), msg.getBUserId(), CommandCodec.describe(type, msg.getMessage()));
                     outQueue.put(pkt);
                 } catch (IllegalArgumentException | GeneralSecurityException e) {
                     System.err.println("Decryptor: dropping bad packet — " + e.getMessage());
