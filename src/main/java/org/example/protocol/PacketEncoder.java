@@ -1,3 +1,5 @@
+package org.example.protocol;
+
 import java.nio.ByteBuffer;
 import java.security.GeneralSecurityException;
 import java.util.Arrays;

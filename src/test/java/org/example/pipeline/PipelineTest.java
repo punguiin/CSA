@@ -1,3 +1,11 @@
+package org.example.pipeline;
+
+import org.example.protocol.Message;
+import org.example.protocol.MessageCipher;
+import org.example.protocol.Packet;
+import org.example.protocol.PacketDecoder;
+import org.example.protocol.PacketEncoder;
+
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;

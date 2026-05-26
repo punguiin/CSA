@@ -1,3 +1,5 @@
+package org.example.protocol;
+
 public class Message {
     final private int cType;
     final private int bUserId;

@@ -1,3 +1,5 @@
+package org.example.pipeline;
+
 import java.util.HexFormat;
 import java.util.concurrent.BlockingQueue;
 

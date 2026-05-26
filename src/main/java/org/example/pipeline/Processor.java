@@ -1,3 +1,8 @@
+package org.example.pipeline;
+
+import org.example.protocol.Message;
+import org.example.protocol.Packet;
+
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.BlockingQueue;
 
