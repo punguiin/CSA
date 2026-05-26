@@ -31,22 +31,35 @@ public class FakeReceiver implements Receiver {
     @Override
     public void stop() {
         running = false;
-        if (worker != null) worker.interrupt();
+    }
+
+    @Override
+    public void join() throws InterruptedException {
+        if (worker != null) worker.join();
     }
 
     private void run() {
-        while (running) {
-            try {
+        try {
+            while (running) {
                 Packet pkt = generateRandomPacket();
                 byte[] raw = encoder.encodePacket(pkt, cipher);
                 outQueue.put(raw);
                 Thread.sleep(50 + rng.nextInt(150));
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
-            } catch (GeneralSecurityException e) {
-                throw new RuntimeException("Failed to encode random packet", e);
             }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (GeneralSecurityException e) {
+            throw new RuntimeException("Failed to encode random packet", e);
+        } finally {
+            sendPoison();
+        }
+    }
+
+    private void sendPoison() {
+        try {
+            outQueue.put(Poison.BYTES);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 

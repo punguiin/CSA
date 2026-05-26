@@ -7,7 +7,6 @@ public class Decryptor {
     private final MessageCipher cipher;
     private final PacketDecoder decoder = new PacketDecoder();
 
-    private volatile boolean running = false;
     private Thread worker;
 
     public Decryptor(BlockingQueue<byte[]> inQueue, BlockingQueue<Packet> outQueue, MessageCipher cipher) {
@@ -17,29 +16,32 @@ public class Decryptor {
     }
 
     public void start() {
-        if (running) return;
-        running = true;
+        if (worker != null) return;
         worker = new Thread(this::run, "decryptor");
         worker.start();
     }
 
-    public void stop() {
-        running = false;
-        if (worker != null) worker.interrupt();
+    public void join() throws InterruptedException {
+        if (worker != null) worker.join();
     }
 
     private void run() {
-        while (running) {
-            try {
+        try {
+            while (true) {
                 byte[] raw = inQueue.take();
-                Packet pkt = decoder.decodePacket(raw, cipher);
-                outQueue.put(pkt);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
-            } catch (IllegalArgumentException | GeneralSecurityException e) {
-                System.err.println("Decryptor: dropping bad packet — " + e.getMessage());
+                if (raw == Poison.BYTES) {
+                    outQueue.put(Poison.PACKET);
+                    break;
+                }
+                try {
+                    Packet pkt = decoder.decodePacket(raw, cipher);
+                    outQueue.put(pkt);
+                } catch (IllegalArgumentException | GeneralSecurityException e) {
+                    System.err.println("Decryptor: dropping bad packet — " + e.getMessage());
+                }
             }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 }

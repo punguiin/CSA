@@ -7,7 +7,6 @@ public class Processor {
     private final BlockingQueue<Packet> inQueue;
     private final BlockingQueue<Packet> outQueue;
 
-    private volatile boolean running = false;
     private Thread worker;
 
     public Processor(BlockingQueue<Packet> inQueue, BlockingQueue<Packet> outQueue) {
@@ -16,21 +15,23 @@ public class Processor {
     }
 
     public void start() {
-        if (running) return;
-        running = true;
+        if (worker != null) return;
         worker = new Thread(this::run, "processor");
         worker.start();
     }
 
-    public void stop() {
-        running = false;
-        if (worker != null) worker.interrupt();
+    public void join() throws InterruptedException {
+        if (worker != null) worker.join();
     }
 
     private void run() {
-        while (running) {
-            try {
+        try {
+            while (true) {
                 Packet req = inQueue.take();
+                if (req == Poison.PACKET) {
+                    outQueue.put(Poison.PACKET);
+                    break;
+                }
                 Message reqMsg = req.getBMsq();
                 System.out.printf("Processor: cType=%d userId=%d payloadLen=%d pktId=%d%n",
                         reqMsg.getCType(), reqMsg.getBUserId(), reqMsg.getMessage().length, req.getBPktId());
@@ -38,10 +39,9 @@ public class Processor {
                 Message respMsg = new Message(reqMsg.getCType(), reqMsg.getBUserId(), OK_PAYLOAD);
                 Packet resp = new Packet((byte) 0x13, req.getBSrc(), req.getBPktId(), 0, respMsg);
                 outQueue.put(resp);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
             }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 }

@@ -7,7 +7,6 @@ public class Encryptor {
     private final MessageCipher cipher;
     private final PacketEncoder encoder = new PacketEncoder();
 
-    private volatile boolean running = false;
     private Thread worker;
 
     public Encryptor(BlockingQueue<Packet> inQueue, BlockingQueue<byte[]> outQueue, MessageCipher cipher) {
@@ -17,29 +16,32 @@ public class Encryptor {
     }
 
     public void start() {
-        if (running) return;
-        running = true;
+        if (worker != null) return;
         worker = new Thread(this::run, "encryptor");
         worker.start();
     }
 
-    public void stop() {
-        running = false;
-        if (worker != null) worker.interrupt();
+    public void join() throws InterruptedException {
+        if (worker != null) worker.join();
     }
 
     private void run() {
-        while (running) {
-            try {
+        try {
+            while (true) {
                 Packet pkt = inQueue.take();
-                byte[] raw = encoder.encodePacket(pkt, cipher);
-                outQueue.put(raw);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
-            } catch (GeneralSecurityException e) {
-                System.err.println("Encryptor: failed to encrypt response — " + e.getMessage());
+                if (pkt == Poison.PACKET) {
+                    outQueue.put(Poison.BYTES);
+                    break;
+                }
+                try {
+                    byte[] raw = encoder.encodePacket(pkt, cipher);
+                    outQueue.put(raw);
+                } catch (GeneralSecurityException e) {
+                    System.err.println("Encryptor: failed to encrypt — " + e.getMessage());
+                }
             }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 }

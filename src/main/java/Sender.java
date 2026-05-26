@@ -1,4 +1,4 @@
 public interface Sender {
     void start();
-    void stop();
+    void join() throws InterruptedException;
 }
