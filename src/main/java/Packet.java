@@ -1,5 +1,3 @@
-package Lab01;
-
 public class Packet {
     final private byte bMagic = 0x13;
     final private byte bSrc;

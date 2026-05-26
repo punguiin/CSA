@@ -1,5 +1,3 @@
-package Lab01;
-
 public class Message {
     final private int cType;
     final private int bUserId;

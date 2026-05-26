@@ -1,5 +1,3 @@
-package Lab01;
-
 import java.nio.ByteBuffer;
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
