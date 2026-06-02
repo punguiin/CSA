@@ -1,8 +1,6 @@
 package org.example.pipeline;
 
-import org.example.protocol.CommandCodec;
-import org.example.protocol.CommandType;
-import org.example.protocol.Message;
+import org.example.protocol.CommandFactory;
 import org.example.protocol.MessageCipher;
 import org.example.protocol.Packet;
 import org.example.protocol.PacketEncoder;
@@ -50,7 +48,7 @@ public class FakeReceiver implements Receiver {
     private void run() {
         try {
             while (running) {
-                Packet pkt = generateRandomPacket();
+                Packet pkt = CommandFactory.randomRequest(bSrc, pktIdSeq.getAndIncrement(), rng);
                 byte[] raw = encoder.encodePacket(pkt, cipher);
                 outQueue.put(raw);
                 Thread.sleep(50 + rng.nextInt(150));
@@ -72,37 +70,4 @@ public class FakeReceiver implements Receiver {
         }
     }
 
-    private static final String[] NAMES = {"buckwheat", "rice", "sugar", "salt", "flour"};
-    private static final CommandType[] COMMANDS = CommandType.values();
-
-    private Packet generateRandomPacket() {
-        CommandType type = COMMANDS[rng.nextInt(COMMANDS.length)];
-        int bUserId = rng.nextInt(1000);
-        byte[] payload = buildPayload(type);
-        Message msg = new Message(type.code(), bUserId, payload);
-        return new Packet((byte) 0x13, bSrc, pktIdSeq.getAndIncrement(), 0, msg);
-    }
-
-    private byte[] buildPayload(CommandType type) {
-        return switch (type) {
-            case GET_QUANTITY -> CommandCodec.getQuantity(randomProductId());
-            case DECREMENT -> CommandCodec.changeQuantity(randomProductId(), 1 + rng.nextInt(50));
-            case INCREMENT -> CommandCodec.changeQuantity(randomProductId(), 1 + rng.nextInt(50));
-            case ADD_GROUP -> CommandCodec.addGroup(randomGroupId(), randomName());
-            case ADD_PRODUCT -> CommandCodec.addProduct(randomGroupId(), randomProductId(), randomName());
-            case SET_PRICE -> CommandCodec.setPrice(randomProductId(), 100L * (1 + rng.nextInt(1000)));
-        };
-    }
-
-    private int randomProductId() {
-        return 1 + rng.nextInt(5);
-    }
-
-    private int randomGroupId() {
-        return 1 + rng.nextInt(3);
-    }
-
-    private String randomName() {
-        return NAMES[rng.nextInt(NAMES.length)];
-    }
 }
