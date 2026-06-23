@@ -79,6 +79,18 @@ public class SqliteProductRepository implements ProductRepository {
     }
 
     @Override
+    public Optional<Product> findByName(String name) {
+        try (PreparedStatement ps = connection.prepareStatement("SELECT * FROM product WHERE name = ?")) {
+            ps.setString(1, name);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? Optional.of(map(rs)) : Optional.empty();
+            }
+        } catch (SQLException e) {
+            throw new WarehouseException("Can't read product by name " + name, e);
+        }
+    }
+
+    @Override
     public List<Product> findAll() {
         try (PreparedStatement ps = connection.prepareStatement("SELECT * FROM product ORDER BY id");
              ResultSet rs = ps.executeQuery()) {

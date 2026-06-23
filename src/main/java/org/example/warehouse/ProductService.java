@@ -17,8 +17,20 @@ public class ProductService {
         return repository.create(product);
     }
 
+    public int createUnique(Product product) {
+        validate(product);
+        if (repository.findByName(product.getName()).isPresent()) {
+            throw new DuplicateProductNameException(product.getName());
+        }
+        return repository.create(product);
+    }
+
     public Optional<Product> getById(int id) {
         return repository.findById(id);
+    }
+
+    public Optional<Product> getByName(String name) {
+        return repository.findByName(name);
     }
 
     public List<Product> getAll() {
